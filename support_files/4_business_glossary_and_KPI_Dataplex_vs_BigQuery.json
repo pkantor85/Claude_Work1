@@ -1,0 +1,99 @@
+{
+  "config": {
+    "dataset": "gold_business",
+    "table": "gold_kpi_unified"
+  },
+  "bigquery_technical_metadata": {
+    "description": "Technical Table: Ordertake performance data. Granularity: Per Market, Model, Channel, and Month. Source: SEER System. Dimensions and metrics designed for KPI tracking and performance analysis.Dimension related fields start with 'DIM_' and metric fields start with 'M_'.",
+    "columns": {
+      "DIM_YEARMONTH": {
+        "description": "Year and month identifier.",
+        "data_type_hint": "String (YYYYMM)",
+        "example_values": ["202505", "202506", "202507"],
+        "calculation_logic": "Derived from ROAR_DATE in Silver layer."
+      },
+      "DIM_MARKET_NAME": {
+        "description": "Full name of the market or country.",
+        "data_type_hint": "String",
+        "example_values": ["Austria", "Britain", "Germany"]
+      },
+      "DIM_MAIN_CHANNEL": {
+        "description": "Sales channel classification.",
+        "data_type_hint": "String",
+        "example_values": ["Retail", "Fleet", "Demo"]
+      },
+      "DIM_MODEL_NAME": {
+        "description": "Vehicle model marketing name including variant.",
+        "data_type_hint": "String",
+        "example_values": ["P703 Ranger Raptor FTM", "KUGA CX482 MCA"]
+      },
+      "M_OT_ACT": {
+        "description": "Actual order count. Number of customer orders placed in the system for the given period, market, model, and channel.",
+        "data_type_hint": "Integer (Count)",
+        "example_values": ["0", "42", "154"],
+        "calculation_logic": "Sum of individual orders. Nulls converted to 0."
+      },
+      "M_CAL_OT_OBJ": {
+        "description": "Calendarized Ordertake Objective target. Sales target adjusted for the number of working days passed in the month.",
+        "data_type_hint": "Integer (Target)",
+        "example_values": ["10", "234"],
+        "calculation_logic": "Time-weighted objective for the specific period."
+      },
+      "M_PERF_VS_CALOBJ": {
+        "description": "Ordertake Performance vs. Calendarized Objective",
+        "data_type_hint": "Float (Percentage)",
+        "example_values": ["95.5", "100.0", "110.2"],
+        "calculation_logic": "(M_OT_ACT / M_CAL_OT_OBJ) * 100"
+      }
+    }
+  },
+  "dataplex_business_glossary": {
+    "terms": [
+      {
+        "business_term": "Ordertake Performance Dataset",
+        "definition": "The official dataset for monitoring Ordertake performance against objectives. Used to assess market penetration and channel effectiveness.",
+        "data_steward": "Programming Team",
+        "update_frequency": "Daily",
+        "security_classification": "Internal Only",
+        "linked_assets": ["gold_kpi_unified"]
+      },
+      {
+        "business_term": "Performance Period",
+        "definition": "The fiscal reporting month used for performance tracking.",
+        "linked_assets": ["gold_kpi_unified.DIM_YEARMONTH"]
+      },
+      {
+        "business_term": "Market",
+        "definition": "The geographic entity where the vehicle is contracted (Ordertake), sold, and registered.",
+        "linked_assets": ["gold_kpi_unified.DIM_MARKET_NAME"]
+      },
+      {
+        "business_term": "Vehicle Model",
+        "definition": "The marketing name of the vehicle model including variant designation.",
+        "data_steward": "Product Management",
+        "business_function": "Marketing",
+        "linked_assets": ["gold_kpi_unified.DIM_MODEL_NAME"]
+      },
+      {
+        "business_term": "Sales Channel",
+        "definition": "The commercial channel through which the vehicle is contracted (Ordertake) and sold (e.g., Retail to private customers, Fleet to businesses).",
+        "linked_assets": ["gold_kpi_unified.DIM_MAIN_CHANNEL"]
+      },
+      {
+        "business_term": "Ordertake Actual",
+        "definition": "The confirmed volume of customer contracted vehicle orders placed in the system.",
+        "linked_assets": ["gold_kpi_unified.M_OT_ACT"]
+      },
+      {
+        "business_term": "Calendarized Objective",
+        "definition": "The Ordertake target adjusted for the number of working days passed in the month.",
+        "linked_assets": ["gold_kpi_unified.M_CAL_OT_OBJ"]
+      },
+      {
+        "business_term": "Performance % (vs Calendarized Objective)",
+        "definition": "Key Performance Indicator (KPI) measuring Ordertake performance. Calculated as Actuals divided by Calendarized Objective.",
+        "linked_assets": ["gold_kpi_unified.M_PERF_VS_CALOBJ"]
+      }
+    ]
+  }
+}
