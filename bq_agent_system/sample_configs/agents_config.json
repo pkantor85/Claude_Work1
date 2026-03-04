@@ -1,0 +1,31 @@
+{
+  "project_id": "ordertake-datalake-gcp-pilot",
+  "location": "global",
+  "gcs_bucket": "ordertake-datalake-gcp-pilot-landing",
+  "agents": [
+    {
+      "agent_id": "ordertake_agent_v2",
+      "display_name": "Ordertake_Agent",
+      "description": "BigQuery conversation agent for Ordertake Performance Data",
+      "metadata_file": "4_business_glossary_and_KPI_Dataplex_vs_BigQuery.json",
+      "datasources": [
+        {
+          "project_id": "ordertake-datalake-gcp-pilot",
+          "dataset_id": "gold_business",
+          "table_id": "gold_kpi_unified"
+        }
+      ],
+      "dataplex_glossary": {
+        "project_id": "ordertake-datalake-gcp-pilot",
+        "location": "us",
+        "glossary_id": "ot-glossary-v6"
+      },
+      "prompt_settings": {
+        "agent_name": "Ordertake Agent",
+        "domain": "Automotive Order Take"
+      },
+      "labels": {},
+      "max_bytes_billed": 0
+    }
+  ]
+}
