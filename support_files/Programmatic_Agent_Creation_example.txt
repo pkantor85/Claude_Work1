@@ -1,0 +1,125 @@
+4.1 Phase 1 – Programmatic Agent Creation via CA API
+Goal: Replicate the console-created Ordertake_Agent programmatically using the Conversational Analytics API Python SDK.
+
+"""
+4.1.1 Prerequisites & Setup
+# Enable required APIs
+gcloud services enable geminidataanalytics.googleapis.com \
+  bigquery.googleapis.com \
+  cloudaicompanion.googleapis.com \
+  dataplex.googleapis.com \
+  --project=ordertake-datalake-gcp-pilot
+
+# Install Python SDK
+pip install google-cloud-geminidataanalytics google-cloud-dataplex
+
+4.1.2 Create the Ordertake Agent Programmatically
+from google.cloud import geminidataanalytics
+
+# Initialize clients
+data_agent_client = geminidataanalytics.DataAgentServiceClient()
+data_chat_client = geminidataanalytics.DataChatServiceClient()
+
+PROJECT_ID = "ordertake-datalake-gcp-pilot"
+LOCATION = "global"
+
+# Define BigQuery table reference
+bq_ref = geminidataanalytics.BigQueryTableReference()
+bq_ref.project_id = PROJECT_ID
+bq_ref.dataset_id = "gold_business"
+bq_ref.table_id = "gold_kpi_unified"
+bq_ref.schema = geminidataanalytics.Schema()
+bq_ref.schema.description = (
+    "Ordertake performance data. Granularity: Per Market, "
+    "Model, Channel, and Month. Dimensions start with DIM_, "
+    "metrics start with M_."
+)
+bq_ref.schema.fields = [
+    geminidataanalytics.Field(
+        name="DIM_YEARMONTH",
+        description="Year and month identifier (YYYYMM)"
+    ),
+    geminidataanalytics.Field(
+        name="DIM_MARKET_NAME",
+        description="Full name of the market or country"
+    ),
+    # ... additional field descriptions ...
+]
+
+# Define data sources
+datasource_refs = geminidataanalytics.DatasourceReferences()
+datasource_refs.bq.table_references = [bq_ref]
+
+# System instruction (YAML format recommended)
+system_instruction = """
+system_instruction:
+  - You are Ordertake Agent, a SQL Assistant specialized
+    in Automotive Order Take datasets.
+  - Convert natural language to valid BigQuery SQL.
+  - Use DIM_ columns for GROUP BY/WHERE, M_ for aggregations.
+  - Qualify table: gold_business.gold_kpi_unified
+business_terms:
+  - Performance Period: DIM_YEARMONTH
+  - Market: DIM_MARKET_NAME
+  - Vehicle Model: DIM_MODEL_NAME
+  - Sales Channel: DIM_MAIN_CHANNEL
+  - Ordertake Actual: M_OT_ACT
+  - Calendarized Objective: M_CAL_OT_OBJ
+  - Performance %: M_PERF_VS_CALOBJ
+"""
+
+# Set up published context for stateful chat
+published_context = geminidataanalytics.Context()
+published_context.system_instruction = system_instruction
+published_context.datasource_references = datasource_refs
+
+# Create the agent
+agent = geminidataanalytics.DataAgent()
+agent.data_analytics_agent.published_context = published_context
+
+request = geminidataanalytics.CreateDataAgentRequest(
+    parent=f"projects/{PROJECT_ID}/locations/{LOCATION}",
+    data_agent_id="ordertake_agent_v2",
+    data_agent=agent,
+)
+
+response = data_agent_client.create_data_agent_sync(
+    request=request
+)
+print(f"Agent created: {response.name}")
+
+4.1.3 Create a Stateful Conversation & Chat
+# Create conversation
+conversation = geminidataanalytics.Conversation()
+conversation.agents = [
+    f"projects/{PROJECT_ID}/locations/{LOCATION}"
+    f"/dataAgents/ordertake_agent_v2"
+]
+
+conv_request = geminidataanalytics.CreateConversationRequest(
+    parent=f"projects/{PROJECT_ID}/locations/{LOCATION}",
+    conversation_id="conv_ordertake_001",
+    conversation=conversation,
+)
+conv_response = data_chat_client.create_conversation(
+    request=conv_request
+)
+
+# Send a question
+def stream_chat(question, conversation_name, agent_name):
+    user_msg = geminidataanalytics.UserMessage(text=question)
+    conv_ref = geminidataanalytics.ConversationReference()
+    conv_ref.conversation = conversation_name
+    conv_ref.data_agent = agent_name
+
+    request = geminidataanalytics.ChatRequest(
+        parent=f"projects/{PROJECT_ID}/locations/{LOCATION}",
+        messages=[user_msg],
+        conversation_reference=conv_ref,
+    )
+    for resp in data_chat_client.chat(request=request):
+        if hasattr(resp, 'system_message'):
+            msg = resp.system_message
+            if hasattr(msg, 'text') and msg.text:
+                print(msg.text)
+"""
