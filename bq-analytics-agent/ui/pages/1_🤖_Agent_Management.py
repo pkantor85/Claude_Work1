@@ -9,7 +9,6 @@ import streamlit as st
 from src.agent_manager import (
     create_agent,
     delete_agent,
-    get_agent,
     list_agents,
     update_agent,
 )
@@ -21,7 +20,6 @@ from src.config_loader import (
     PromptConfig,
 )
 
-st.set_page_config(page_title="Agent Management", page_icon="🤖", layout="wide")
 st.title("🤖 Agent Management")
 
 project_id = st.session_state.get("project_id", "")

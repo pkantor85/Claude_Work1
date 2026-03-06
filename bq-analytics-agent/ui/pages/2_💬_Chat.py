@@ -24,8 +24,6 @@ from src.response_handler import AgentResponse, ResponseType, TextType
 from ui.components.chat_message import render_agent_response
 from ui.components.sql_display import render_sql
 
-st.set_page_config(page_title="Chat", page_icon="💬", layout="wide")
-
 project_id = st.session_state.get("project_id", "")
 location = st.session_state.get("location", "global")
 
@@ -191,7 +189,6 @@ if question := st.chat_input("Ask a question about your data…"):
                         if resp.vega_config:
                             try:
                                 import altair as alt
-                                import json
 
                                 chart = alt.Chart.from_dict(resp.vega_config)
                                 st.altair_chart(
