@@ -9,8 +9,14 @@ Mimics the BigQuery Agent Console UI with:
 
 from __future__ import annotations
 
+import sys
 import uuid
+from pathlib import Path
 from typing import Any
+
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
 import streamlit as st
 
