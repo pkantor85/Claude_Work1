@@ -10,8 +10,7 @@ Handles:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Callable, Iterator, Optional
+from typing import Callable, Optional
 
 from google.cloud import geminidataanalytics
 

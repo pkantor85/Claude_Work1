@@ -30,7 +30,6 @@ logger = get_logger(__name__)
 # ── Client singletons ─────────────────────────────────────
 
 _agent_client: Optional[geminidataanalytics.DataAgentServiceClient] = None
-_chat_client: Optional[geminidataanalytics.DataChatServiceClient] = None
 
 
 def _get_agent_client() -> geminidataanalytics.DataAgentServiceClient:
@@ -38,13 +37,6 @@ def _get_agent_client() -> geminidataanalytics.DataAgentServiceClient:
     if _agent_client is None:
         _agent_client = geminidataanalytics.DataAgentServiceClient()
     return _agent_client
-
-
-def _get_chat_client() -> geminidataanalytics.DataChatServiceClient:
-    global _chat_client
-    if _chat_client is None:
-        _chat_client = geminidataanalytics.DataChatServiceClient()
-    return _chat_client
 
 
 # ── Helpers ────────────────────────────────────────────────
@@ -79,6 +71,7 @@ def _build_bq_table_reference(
 def _resolve_system_instruction(
     agent_cfg: AgentConfig,
     global_cfg: GlobalConfig,
+    metadata: Optional[MetadataBundle] = None,
 ) -> str:
     """
     Resolve the system instruction for an agent.
@@ -86,6 +79,9 @@ def _resolve_system_instruction(
     Priority:
     1. Pre-built prompt text file in GCS  (``prompt_gcs_path``)
     2. Auto-generated from metadata JSON   (``metadata_gcs_path``)
+
+    If *metadata* is already loaded it will be reused instead of
+    fetching from GCS again.
     """
     pc = agent_cfg.prompt_config
     bucket = global_cfg.gcs_bucket
@@ -103,14 +99,19 @@ def _resolve_system_instruction(
         )
 
     # Auto-generate from metadata
-    assert pc.metadata_gcs_path, "metadata_gcs_path is required"
-    meta = load_metadata_from_gcs(
-        bucket_name=bucket,
-        blob_path=pc.metadata_gcs_path,
-        project_id=global_cfg.project_id,
-    )
+    if metadata is None:
+        if not pc.metadata_gcs_path:
+            raise ValueError(
+                f"Agent '{agent_cfg.agent_id}': metadata_gcs_path is "
+                "required when prompt_gcs_path is not set"
+            )
+        metadata = load_metadata_from_gcs(
+            bucket_name=bucket,
+            blob_path=pc.metadata_gcs_path,
+            project_id=global_cfg.project_id,
+        )
     return generate_system_instruction(
-        metadata=meta,
+        metadata=metadata,
         agent_name=pc.agent_name,
         domain=pc.domain,
     )
@@ -160,11 +161,13 @@ def create_agent(
         location,
     )
 
-    # 1. System instruction
-    system_instruction = _resolve_system_instruction(agent_cfg, global_cfg)
-
-    # 2. Metadata for schema enrichment
+    # 1. Metadata (loaded once, used for both instruction and schema)
     metadata = _resolve_metadata(agent_cfg, global_cfg)
+
+    # 2. System instruction (reuses metadata to avoid duplicate GCS fetch)
+    system_instruction = _resolve_system_instruction(
+        agent_cfg, global_cfg, metadata=metadata
+    )
 
     # 3. BigQuery table references
     table_refs = [
@@ -249,8 +252,10 @@ def update_agent(
     project_id = global_cfg.project_id
     location = global_cfg.location
 
-    system_instruction = _resolve_system_instruction(agent_cfg, global_cfg)
     metadata = _resolve_metadata(agent_cfg, global_cfg)
+    system_instruction = _resolve_system_instruction(
+        agent_cfg, global_cfg, metadata=metadata
+    )
 
     table_refs = [
         _build_bq_table_reference(ds, metadata)

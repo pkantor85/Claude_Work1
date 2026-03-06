@@ -16,12 +16,7 @@ test:
 	pytest tests/ -v
 
 lint:
-	python -m py_compile src/config_loader.py
-	python -m py_compile src/metadata_loader.py
-	python -m py_compile src/prompt_generator.py
-	python -m py_compile src/agent_manager.py
-	python -m py_compile src/conversation_manager.py
-	python -m py_compile src/response_handler.py
+	python -m ruff check src/ ui/ scripts/ tests/
 
 # ──────────────────────────────────────────────
 # Run Streamlit UI locally

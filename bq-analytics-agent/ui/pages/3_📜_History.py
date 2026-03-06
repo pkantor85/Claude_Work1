@@ -6,14 +6,12 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.agent_manager import list_agents
 from src.conversation_manager import (
     delete_conversation,
     list_conversations,
     list_messages,
 )
 
-st.set_page_config(page_title="Conversation History", page_icon="📜", layout="wide")
 st.title("📜 Conversation History")
 
 project_id = st.session_state.get("project_id", "")
