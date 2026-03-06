@@ -1,0 +1,40 @@
+# ── Files to exclude from Cloud Build uploads ──
+# Reduces tarball size → faster upload → faster build
+
+# Version control
+.git/
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Tests (not needed in container)
+tests/
+conftest.py
+.pytest_cache/
+
+# Dev files
+*.md
+Makefile
+setup.py
+pyproject.toml
+.vscode/
+.idea/
+*.swp
+
+# Local environments
+.venv/
+venv/
+.env
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Support files (not needed in container)
+support_files/

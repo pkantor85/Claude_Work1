@@ -1,18 +1,24 @@
 # ============================================================
 # Dockerfile — BigQuery Data Analytics Agent (Streamlit)
 # ============================================================
-# Multi-stage build for a lean Cloud Run container.
+# Optimised for fast Cloud Run cold starts.
 # ============================================================
 
 FROM python:3.11-slim AS base
 
-# Prevent .pyc files and enable unbuffered output
+# Prevent .pyc files at build time (we compile explicitly below)
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# ── Install dependencies ──────────────────────────────────
+# ── Install system deps (curl for healthcheck) ───────────
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+
+# ── Install Python dependencies ──────────────────────────
+# Separate layer so code changes don't re-install deps
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -28,14 +34,16 @@ COPY scripts/ scripts/
 
 COPY .streamlit/ .streamlit/
 
-# Streamlit expects a config dir; create defaults
 RUN mkdir -p /root/.streamlit && \
-  echo '[server]\n\
-  headless = true\n\
-  port = 8080\n\
-  enableCORS = false\n\
-  enableXsrfProtection = false\n\
-  ' > /root/.streamlit/config.toml
+  printf '[server]\nheadless = true\nport = 8080\nenableCORS = false\nenableXsrfProtection = false\nfileWatcherType = "none"\n\n[browser]\ngatherUsageStats = false\n' > /root/.streamlit/config.toml
+
+# ── Pre-compile bytecode for faster startup ───────────────
+
+RUN python -m compileall -q src/ ui/ scripts/ 2>/dev/null || true
+
+# ── Pre-warm: import heavy modules once to verify ─────────
+
+RUN python -c "import streamlit; import pandas; import altair; import google.cloud.storage; print('Pre-warm OK')"
 
 # ── Expose port ───────────────────────────────────────────
 
@@ -51,4 +59,6 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 ENTRYPOINT ["streamlit", "run", "ui/app.py", \
   "--server.port=8080", \
   "--server.address=0.0.0.0", \
-  "--server.headless=true"]
+  "--server.headless=true", \
+  "--server.fileWatcherType=none", \
+  "--server.runOnSave=false"]
