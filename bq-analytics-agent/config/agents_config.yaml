@@ -1,0 +1,74 @@
+# ============================================================
+# BigQuery Data Analytics Agent - Master Configuration
+# ============================================================
+# This file defines all agents to be provisioned via the
+# Conversational Analytics API. It is stored in GCS and
+# loaded dynamically at runtime.
+# ============================================================
+
+global:
+  project_id: "ordertake-datalake-gcp-pilot"
+  location: "global"
+  gcs_bucket: "ordertake-datalake-gcp-pilot-landing"
+  metadata_base_path: "agent_metadata/"
+
+# ──────────────────────────────────────────────
+# Agent Definitions
+# ──────────────────────────────────────────────
+agents:
+
+  # ── Agent 1: Ordertake Performance ──────────
+  - agent_id: "ordertake_agent_v2"
+    display_name: "Ordertake Performance Agent"
+    description: >-
+      Analyzes automotive order-take KPIs across markets,
+      models, and sales channels. Converts natural language
+      questions into BigQuery SQL against the gold_kpi_unified
+      table.
+
+    prompt_config:
+      agent_name: "Ordertake Agent"
+      domain: "Automotive Order Take"
+      # Path relative to gcs_bucket — the metadata JSON file
+      metadata_gcs_path: "4_business_glossary_and_KPI_Dataplex_vs_BigQuery.json"
+      # Alternatively, supply a pre-built prompt text file:
+      # prompt_gcs_path: "prompts/ordertake_system_instruction.txt"
+
+    datasources:
+      - type: "bigquery"
+        project_id: "ordertake-datalake-gcp-pilot"
+        dataset_id: "gold_business"
+        table_id: "gold_kpi_unified"
+
+    dataplex:
+      glossary_id: "ot-glossary-v6"
+      glossary_location: "us"
+
+    options:
+      python_analysis_enabled: true
+      stateful_chat: true
+
+    iam_bindings:
+      - role: "roles/geminidataanalytics.dataAgentUser"
+        members:
+          - "user:8aisoft@gmail.com"
+          - "group:data-team@company.com"
+
+  # ── Agent 2: Sales Dashboard (example) ─────
+  # Uncomment and customise for additional agents
+  #
+  # - agent_id: "sales_agent_v1"
+  #   display_name: "Sales Dashboard Agent"
+  #   description: "Answers questions about retail sales data"
+  #   prompt_config:
+  #     agent_name: "Sales Agent"
+  #     domain: "Retail Sales Analytics"
+  #     metadata_gcs_path: "sales_metadata.json"
+  #   datasources:
+  #     - type: "bigquery"
+  #       project_id: "ordertake-datalake-gcp-pilot"
+  #       dataset_id: "gold_sales"
+  #       table_id: "daily_sales"
+  #   options:
+  #     python_analysis_enabled: true
+  #     stateful_chat: true

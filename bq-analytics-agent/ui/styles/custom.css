@@ -1,0 +1,133 @@
+/* ============================================================
+   BigQuery Data Analytics Agent — Custom Streamlit Styles
+   Mimics the Google Cloud BigQuery Console agent experience
+   ============================================================ */
+
+/* ── Global ──────────────────────────────────────────────── */
+
+[data-testid="stAppViewContainer"] {
+    background-color: #f8f9fa;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #dadce0;
+}
+
+[data-testid="stSidebar"] [data-testid="stMarkdown"] h1 {
+    color: #1a73e8;
+    font-size: 1.3rem;
+}
+
+/* ── Chat messages ───────────────────────────────────────── */
+
+[data-testid="stChatMessage"] {
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+}
+
+/* User message styling */
+[data-testid="stChatMessage"][data-testid*="user"] {
+    background-color: #e8f0fe;
+    border: 1px solid #d2e3fc;
+}
+
+/* Assistant message styling */
+[data-testid="stChatMessage"][data-testid*="assistant"] {
+    background-color: #ffffff;
+    border: 1px solid #dadce0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ── SQL code blocks ─────────────────────────────────────── */
+
+[data-testid="stCode"] {
+    border-radius: 8px;
+    border: 1px solid #dadce0;
+}
+
+/* ── Data tables ─────────────────────────────────────────── */
+
+[data-testid="stDataFrame"] {
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+[data-testid="stDataFrame"] table thead th {
+    background-color: #f1f3f4 !important;
+    color: #202124 !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+
+.stButton > button[kind="primary"] {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.stButton > button[kind="primary"]:hover {
+    background-color: #1765cc;
+}
+
+.stButton > button[kind="secondary"] {
+    background-color: #ffffff;
+    color: #1a73e8;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+}
+
+/* ── Expanders (for thoughts / SQL) ──────────────────────── */
+
+[data-testid="stExpander"] {
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
+    background-color: #fafafa;
+    margin-bottom: 8px;
+}
+
+[data-testid="stExpander"] summary {
+    font-weight: 500;
+    color: #5f6368;
+}
+
+/* ── Chat input ──────────────────────────────────────────── */
+
+[data-testid="stChatInput"] {
+    border: 2px solid #1a73e8;
+    border-radius: 24px;
+    padding: 8px 16px;
+}
+
+[data-testid="stChatInput"]:focus-within {
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+/* ── Divider ─────────────────────────────────────────────── */
+
+hr {
+    border-color: #e8eaed;
+}
+
+/* ── Metric cards ────────────────────────────────────────── */
+
+[data-testid="stMetric"] {
+    background-color: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+/* ── Toast / success / error ─────────────────────────────── */
+
+[data-testid="stAlert"] {
+    border-radius: 8px;
+}

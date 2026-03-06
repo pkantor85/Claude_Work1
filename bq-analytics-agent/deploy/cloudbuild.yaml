@@ -1,0 +1,75 @@
+# ============================================================
+# Cloud Build — Build and deploy to Cloud Run
+# ============================================================
+#
+# Usage:
+#   gcloud builds submit --config deploy/cloudbuild.yaml .
+#
+# Required substitutions (or set in your trigger):
+#   _SERVICE_NAME  — Cloud Run service name
+#   _REGION        — GCP region
+#   _PROJECT_ID    — GCP project
+#
+# ============================================================
+
+substitutions:
+  _SERVICE_NAME: bq-analytics-agent
+  _REGION: us-central1
+
+steps:
+  # ── Step 1: Build Docker image ───────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}"
+      - "-t"
+      - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:latest"
+      - "-f"
+      - "deploy/Dockerfile"
+      - "."
+
+  # ── Step 2: Push image to Container Registry ────────────
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}"
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:latest"
+
+  # ── Step 3: Deploy to Cloud Run ─────────────────────────
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image"
+      - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}"
+      - "--region"
+      - "${_REGION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--memory"
+      - "1Gi"
+      - "--cpu"
+      - "1"
+      - "--min-instances"
+      - "0"
+      - "--max-instances"
+      - "3"
+      - "--timeout"
+      - "600"
+      - "--set-env-vars"
+      - "PYTHONUNBUFFERED=1"
+
+images:
+  - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}"
+  - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
